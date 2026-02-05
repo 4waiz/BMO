@@ -12,6 +12,14 @@ if (!(Test-Path $venv)) {
 $python = Join-Path $venv "Scripts\python.exe"
 & $python -m pip install --upgrade pip
 & $python -m pip install -r requirements.txt
+if ($LASTEXITCODE -ne 0) {
+  Write-Warning "pip install failed (likely webrtcvad build). Retrying without webrtcvad..."
+  $tmp = Join-Path $env:TEMP "req-no-vad.txt"
+  Get-Content requirements.txt | Where-Object { $_ -and ($_ -notmatch '^webrtcvad') } | Set-Content $tmp
+  & $python -m pip install -r $tmp
+  Write-Warning "webrtcvad not installed. VAD will use energy fallback."
+  Write-Warning "To enable webrtcvad on Windows, install Microsoft C++ Build Tools."
+}
 
 if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
   Write-Warning "ffmpeg not found. Audio utilities may fail."

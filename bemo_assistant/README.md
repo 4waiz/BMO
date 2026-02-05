@@ -75,6 +75,7 @@ The scripts will:
 - **Ollama not reachable**: run `ollama serve`
 - **No audio I/O**: check PortAudio and device selection in Settings
 - **TTS missing**: install Piper and set path/voice in Settings
+- **Windows webrtcvad build error**: install Microsoft C++ Build Tools or rerun the bootstrap script (it will continue without webrtcvad and use an energy-based VAD fallback)
 
 ---
 Bemo-inspired only. Not an official or copyrighted character.

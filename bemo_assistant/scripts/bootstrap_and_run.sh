@@ -12,7 +12,15 @@ fi
 # shellcheck disable=SC1091
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -r requirements.txt || {
+  echo "pip install failed (likely webrtcvad build). Retrying without webrtcvad..."
+  tmpfile="$(mktemp)"
+  grep -v '^webrtcvad' requirements.txt > "$tmpfile"
+  python -m pip install -r "$tmpfile"
+  rm -f "$tmpfile"
+  echo "webrtcvad not installed. VAD will use energy fallback."
+  echo "On Windows, install Build Tools to enable webrtcvad."
+}
 
 if ! command -v ffmpeg >/dev/null 2>&1; then
   echo "Warning: ffmpeg not found. Audio utilities may fail."
