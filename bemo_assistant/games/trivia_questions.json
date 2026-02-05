@@ -1,0 +1,74 @@
+﻿[
+  {
+    "question": "Which planet is known as the Red Planet?",
+    "choices": ["Venus", "Mars", "Jupiter", "Mercury"],
+    "answer": 1,
+    "explanation": "Mars looks red because of iron oxide on its surface."
+  },
+  {
+    "question": "What does CPU stand for?",
+    "choices": ["Central Processing Unit", "Computer Power Unit", "Control Program Utility", "Core Process Utility"],
+    "answer": 0,
+    "explanation": "CPU stands for Central Processing Unit."
+  },
+  {
+    "question": "Which ocean is the largest on Earth?",
+    "choices": ["Atlantic", "Indian", "Pacific", "Arctic"],
+    "answer": 2,
+    "explanation": "The Pacific Ocean is the largest."
+  },
+  {
+    "question": "How many colors are in a rainbow?",
+    "choices": ["5", "6", "7", "8"],
+    "answer": 2,
+    "explanation": "Red, orange, yellow, green, blue, indigo, violet."
+  },
+  {
+    "question": "Which gas do plants absorb from the air?",
+    "choices": ["Oxygen", "Carbon Dioxide", "Nitrogen", "Helium"],
+    "answer": 1,
+    "explanation": "Plants use carbon dioxide for photosynthesis."
+  },
+  {
+    "question": "What is the capital of Japan?",
+    "choices": ["Osaka", "Kyoto", "Tokyo", "Nagoya"],
+    "answer": 2,
+    "explanation": "Tokyo is Japan's capital."
+  },
+  {
+    "question": "Which instrument has keys, pedals, and strings?",
+    "choices": ["Guitar", "Piano", "Flute", "Drum"],
+    "answer": 1,
+    "explanation": "The piano uses keys and hammers on strings."
+  },
+  {
+    "question": "What do bees make?",
+    "choices": ["Jam", "Honey", "Maple Syrup", "Butter"],
+    "answer": 1,
+    "explanation": "Bees produce honey from nectar."
+  },
+  {
+    "question": "Which shape has three sides?",
+    "choices": ["Triangle", "Square", "Circle", "Pentagon"],
+    "answer": 0,
+    "explanation": "A triangle has three sides."
+  },
+  {
+    "question": "What is H2O commonly called?",
+    "choices": ["Hydrogen", "Salt", "Water", "Oxygen"],
+    "answer": 2,
+    "explanation": "H2O is water."
+  },
+  {
+    "question": "Which animal is known for its black and white stripes?",
+    "choices": ["Zebra", "Tiger", "Panda", "Skunk"],
+    "answer": 0,
+    "explanation": "Zebras are known for their stripes."
+  },
+  {
+    "question": "How many days are in a leap year?",
+    "choices": ["365", "366", "364", "367"],
+    "answer": 1,
+    "explanation": "Leap years have 366 days."
+  }
+]
