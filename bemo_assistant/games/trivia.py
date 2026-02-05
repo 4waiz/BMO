@@ -15,8 +15,11 @@ class TriviaGame(GameBase):
         path = Path(__file__).parent / "trivia_questions.json"
         if not path.exists():
             return []
-        with path.open("r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with path.open("r", encoding="utf-8-sig") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            return []
 
     def start(self):
         self.current = random.choice(self.questions) if self.questions else None
