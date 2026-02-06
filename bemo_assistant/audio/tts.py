@@ -22,8 +22,17 @@ class PiperTTS:
         if not exe:
             return False, "Piper executable not found."
         if not voice:
-            return False, "Piper voice model not found."
+            return False, f"Piper voice model not found at {self._expected_voice_path()}."
         return True, "Piper ready."
+
+    def _expected_voice_path(self):
+        base_dir = Path(__file__).resolve().parents[1]
+        if self.voice:
+            voice_path = Path(self.voice)
+            if not voice_path.is_absolute():
+                voice_path = base_dir / voice_path
+            return str(voice_path)
+        return str(base_dir / "models" / "piper" / "en_US-lessac-medium.onnx")
 
     def update_voice(self, voice: str, speaker_id: str = "", piper_path: str = ""):
         self.voice = voice

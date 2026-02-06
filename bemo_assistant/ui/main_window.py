@@ -1,4 +1,5 @@
 ﻿import threading
+from pathlib import Path
 from dataclasses import replace
 import sounddevice as sd
 
@@ -81,6 +82,15 @@ class SettingsDialog(QDialog):
         self.piper_path = QLineEdit(settings.piper_path)
         self.tts_test = QPushButton("TTS Test")
         self.tts_test.clicked.connect(self._test_tts)
+        self.tts_download = QPushButton("Download Voice")
+        self.tts_download.clicked.connect(self._download_voice)
+        self.tts_download_status = QLabel("")
+        self.tts_download_status.setWordWrap(True)
+        self.tts_btns = QWidget()
+        tts_btns_layout = QHBoxLayout(self.tts_btns)
+        tts_btns_layout.setContentsMargins(0, 0, 0, 0)
+        tts_btns_layout.addWidget(self.tts_test)
+        tts_btns_layout.addWidget(self.tts_download)
 
         self.system_prompt = QTextEdit(settings.system_prompt)
         self.system_prompt.setMinimumHeight(120)
@@ -108,7 +118,8 @@ class SettingsDialog(QDialog):
         form.addRow("Piper Voice Path", self.tts_voice)
         form.addRow("Piper Speaker ID", self.tts_speaker)
         form.addRow("Piper Executable Path", self.piper_path)
-        form.addRow("TTS", self.tts_test)
+        form.addRow("TTS", self.tts_btns)
+        form.addRow("", self.tts_download_status)
         form.addRow("System Prompt", self.system_prompt)
         form.addRow("", self.camera_check)
         form.addRow("", self.kiosk_check)
@@ -217,9 +228,55 @@ class SettingsDialog(QDialog):
                 os.remove(wav)
             except OSError:
                 pass
-        except Exception:
-            pass
+            self.tts_download_status.setText("TTS OK.")
+        except Exception as exc:
+            self.tts_download_status.setText(f"TTS error: {exc}")
 
+    def _download_voice(self):
+        self.tts_download.setEnabled(False)
+        self.tts_download_status.setText("Downloading Piper voice...")
+
+        def worker():
+            base_dir = Path(__file__).resolve().parents[1]
+            voice_dir = base_dir / "models" / "piper"
+            voice_dir.mkdir(parents=True, exist_ok=True)
+            voice_path = voice_dir / "en_US-lessac-medium.onnx"
+            json_path = voice_dir / "en_US-lessac-medium.onnx.json"
+            ok = False
+            msg = ""
+            try:
+                if voice_path.exists() and json_path.exists():
+                    ok = True
+                    msg = "Voice already downloaded."
+                else:
+                    import requests
+                    base = "https://github.com/rhasspy/piper/releases/download/v1.2.0"
+                    if not voice_path.exists():
+                        with requests.get(f"{base}/en_US-lessac-medium.onnx", stream=True, timeout=60) as r:
+                            r.raise_for_status()
+                            with open(voice_path, "wb") as f:
+                                for chunk in r.iter_content(chunk_size=1024 * 1024):
+                                    if chunk:
+                                        f.write(chunk)
+                    if not json_path.exists():
+                        with requests.get(f"{base}/en_US-lessac-medium.onnx.json", stream=True, timeout=60) as r:
+                            r.raise_for_status()
+                            with open(json_path, "wb") as f:
+                                f.write(r.content)
+                    ok = True
+                    msg = "Voice downloaded."
+            except Exception as exc:
+                msg = f"Download failed: {exc}"
+
+            def apply():
+                if ok:
+                    self.tts_voice.setText(str(voice_path))
+                self.tts_download_status.setText(msg)
+                self.tts_download.setEnabled(True)
+
+            QTimer.singleShot(0, apply)
+
+        threading.Thread(target=worker, daemon=True).start()
     def _collect_settings(self) -> AppSettings:
         settings = replace(self._settings)
         settings.ollama_model = self.model_combo.currentText().strip()

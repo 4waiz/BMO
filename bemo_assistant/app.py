@@ -297,6 +297,9 @@ class AssistantController(QObject):
         self.state = STATE_IDLE
         self.history = []
         self.memory = []
+        self._voice_download_in_progress = False
+        self._startup_greeting = "Hey, I am Bemo. To talk to me, say the wake word \"Hey, Bemo\"."
+        self._greeting_pending = False
 
         self.update_ui_state(STATE_IDLE)
         self.apply_startup_checks()
@@ -314,18 +317,29 @@ class AssistantController(QObject):
                 pass
 
         # Auto-detect default Piper voice if it exists locally
-        default_voice = Path("models/piper/en_US-lessac-medium.onnx")
-        if default_voice.exists() and (not self.settings.tts_voice or not Path(self.settings.tts_voice).exists()):
+        base_dir = Path(__file__).resolve().parent
+
+        def voice_exists(path: str) -> bool:
+            if not path:
+                return False
+            p = Path(path)
+            if not p.is_absolute():
+                p = base_dir / p
+            return p.exists()
+
+        default_voice = base_dir / "models" / "piper" / "en_US-lessac-medium.onnx"
+        if default_voice.exists() and (not self.settings.tts_voice or not voice_exists(self.settings.tts_voice)):
             self.settings.tts_voice = str(default_voice)
             self.settings_manager.save(self.settings)
             self.tts.update_voice(self.settings.tts_voice, self.settings.tts_speaker, self.settings.piper_path)
         elif not default_voice.exists():
+            self._voice_download_in_progress = True
+            self.ui.set_warning("Downloading Piper voice...")
             self._download_default_voice_async()
-
         if not self.ollama.health():
             self.ui.set_warning("Ollama is not reachable. Start 'ollama serve'.")
         tts_ok, tts_msg = self.tts.status()
-        if not tts_ok:
+        if not tts_ok and not self._voice_download_in_progress:
             self.ui.set_warning(f"TTS unavailable. {tts_msg} Set Piper exe + voice in Settings.")
         if self.settings.wakeword_mode == "openwakeword":
             try:
@@ -339,12 +353,12 @@ class AssistantController(QObject):
             try:
                 import requests
                 base = "https://github.com/rhasspy/piper/releases/download/v1.2.0"
-                voice_dir = Path("models/piper")
+                base_dir = Path(__file__).resolve().parent
+                voice_dir = base_dir / "models" / "piper"
                 voice_dir.mkdir(parents=True, exist_ok=True)
                 voice_path = voice_dir / "en_US-lessac-medium.onnx"
                 json_path = voice_dir / "en_US-lessac-medium.onnx.json"
                 if not voice_path.exists():
-                    self.ui.set_warning("Downloading Piper voice...")
                     with requests.get(f"{base}/en_US-lessac-medium.onnx", stream=True, timeout=60) as r:
                         r.raise_for_status()
                         with open(voice_path, "wb") as f:
@@ -356,15 +370,23 @@ class AssistantController(QObject):
                         r.raise_for_status()
                         with open(json_path, "wb") as f:
                             f.write(r.content)
-                self.settings.tts_voice = str(voice_path)
-                self.settings_manager.save(self.settings)
-                self.tts.update_voice(self.settings.tts_voice, self.settings.tts_speaker, self.settings.piper_path)
-                self.ui.set_warning("")
+                def apply_success():
+                    self._voice_download_in_progress = False
+                    self.settings.tts_voice = str(voice_path)
+                    self.settings_manager.save(self.settings)
+                    self.tts.update_voice(self.settings.tts_voice, self.settings.tts_speaker, self.settings.piper_path)
+                    self.ui.set_warning("")
+                    if self._greeting_pending and self.tts.is_available:
+                        self._greeting_pending = False
+                        self.reply_with_text(self._startup_greeting)
+                QTimer.singleShot(0, apply_success)
             except Exception as exc:
-                self.ui.set_warning(f"Piper voice download failed: {exc}")
+                def apply_error():
+                    self._voice_download_in_progress = False
+                    self.ui.set_warning(f"Piper voice download failed: {exc}")
+                QTimer.singleShot(0, apply_error)
 
         threading.Thread(target=worker, daemon=True).start()
-
     def start(self):
         self.ui.set_kiosk_mode(self.settings.kiosk_mode)
         self.ui.show()
@@ -372,9 +394,12 @@ class AssistantController(QObject):
         QTimer.singleShot(1200, self.startup_greet)
 
     def startup_greet(self):
-        greeting = 'Hey, I am Bemo. To talk to me, say the wake word \"Hey, Bemo\".'
+        greeting = self._startup_greeting
         self.ui.append_transcript("Bemo", greeting)
-        self.reply_with_text(greeting)
+        if self.tts.is_available:
+            self.reply_with_text(greeting)
+        else:
+            self._greeting_pending = True
 
     def stop_all(self):
         if self.listen_worker:
@@ -509,7 +534,10 @@ class AssistantController(QObject):
             return
         tts_ok, tts_msg = self.tts.status()
         if not tts_ok:
-            self.ui.set_warning(f"TTS unavailable. {tts_msg} Set Piper exe + voice in Settings.")
+            if self._voice_download_in_progress:
+                self.ui.set_warning("Downloading Piper voice...")
+            else:
+                self.ui.set_warning(f"TTS unavailable. {tts_msg} Set Piper exe + voice in Settings.")
             self.update_ui_state(STATE_IDLE)
             return
         self.update_ui_state(STATE_SPEAKING)
