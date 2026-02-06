@@ -302,6 +302,17 @@ class AssistantController(QObject):
         self.apply_startup_checks()
 
     def apply_startup_checks(self):
+        # Auto-detect Piper executable inside venv
+        if not self.settings.piper_path:
+            try:
+                candidate = Path(sys.executable).parent / "piper.exe"
+                if candidate.exists():
+                    self.settings.piper_path = str(candidate)
+                    self.settings_manager.save(self.settings)
+                    self.tts.update_voice(self.settings.tts_voice, self.settings.tts_speaker, self.settings.piper_path)
+            except Exception:
+                pass
+
         # Auto-detect default Piper voice if it exists locally
         default_voice = Path("models/piper/en_US-lessac-medium.onnx")
         if default_voice.exists() and (not self.settings.tts_voice or not Path(self.settings.tts_voice).exists()):

@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+import sys
 
 
 class PiperTTS:
@@ -23,6 +24,16 @@ class PiperTTS:
     def _resolve_piper(self):
         if self.piper_path and Path(self.piper_path).exists():
             return self.piper_path
+
+        # Look for piper.exe next to the current Python executable (venv Scripts)
+        try:
+            py_dir = Path(sys.executable).parent
+            candidate = py_dir / "piper.exe"
+            if candidate.exists():
+                return str(candidate)
+        except Exception:
+            pass
+
         return shutil.which("piper")
 
     def _resolve_voice_path(self):
