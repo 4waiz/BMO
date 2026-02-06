@@ -16,6 +16,15 @@ class PiperTTS:
     def is_available(self) -> bool:
         return bool(self._resolve_piper()) and bool(self._resolve_voice_path())
 
+    def status(self):
+        exe = self._resolve_piper()
+        voice = self._resolve_voice_path()
+        if not exe:
+            return False, "Piper executable not found."
+        if not voice:
+            return False, "Piper voice model not found."
+        return True, "Piper ready."
+
     def update_voice(self, voice: str, speaker_id: str = "", piper_path: str = ""):
         self.voice = voice
         self.speaker_id = speaker_id

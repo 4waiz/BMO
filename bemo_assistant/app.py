@@ -324,8 +324,9 @@ class AssistantController(QObject):
 
         if not self.ollama.health():
             self.ui.set_warning("Ollama is not reachable. Start 'ollama serve'.")
-        if not self.tts.is_available:
-            self.ui.set_warning("Piper TTS not ready. Set Piper exe + voice in Settings or run bootstrap script.")
+        tts_ok, tts_msg = self.tts.status()
+        if not tts_ok:
+            self.ui.set_warning(f"TTS unavailable. {tts_msg} Set Piper exe + voice in Settings.")
         if self.settings.wakeword_mode == "openwakeword":
             try:
                 import openwakeword  # noqa: F401
@@ -506,8 +507,9 @@ class AssistantController(QObject):
         if not response:
             self.update_ui_state(STATE_IDLE)
             return
-        if not self.tts.is_available:
-            self.ui.set_warning("TTS unavailable. Set a valid Piper executable and voice in Settings.")
+        tts_ok, tts_msg = self.tts.status()
+        if not tts_ok:
+            self.ui.set_warning(f"TTS unavailable. {tts_msg} Set Piper exe + voice in Settings.")
             self.update_ui_state(STATE_IDLE)
             return
         self.update_ui_state(STATE_SPEAKING)
@@ -616,6 +618,8 @@ class AssistantController(QObject):
             self.wakeword.stop()
             self.wakeword.start()
         self.ui.set_kiosk_mode(self.settings.kiosk_mode)
+        if self.tts.is_available:
+            self.ui.set_warning("")
 
     def verify_ollama(self):
         ok = self.ollama.health()

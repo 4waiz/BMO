@@ -55,17 +55,41 @@ QPushButton {{
     padding: 12px 18px;
     font-size: 15px;
 }}
+QPushButton:hover {{
+    background: #4C9A94;
+}}
+QPushButton:pressed {{
+    background: #2E6F6A;
+}}
 QPushButton#accent {{
     background: {PALETTE['accent_yellow']};
     color: #2C2C2C;
+}}
+QPushButton#accent:hover {{
+    background: #F6DF77;
+}}
+QPushButton#accent:pressed {{
+    background: #E3C24C;
 }}
 QPushButton#danger {{
     background: {PALETTE['accent_red']};
     color: white;
 }}
+QPushButton#danger:hover {{
+    background: #E25B5B;
+}}
+QPushButton#danger:pressed {{
+    background: #C33C3C;
+}}
 QPushButton#gameBtn {{
     background: {PALETTE['accent_blue']};
     color: white;
+}}
+QPushButton#gameBtn:hover {{
+    background: #6AB2FF;
+}}
+QPushButton#gameBtn:pressed {{
+    background: #4B90E6;
 }}
 QLineEdit {{
     background: white;
