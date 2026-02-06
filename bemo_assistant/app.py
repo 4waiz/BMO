@@ -319,6 +319,8 @@ class AssistantController(QObject):
             self.settings.tts_voice = str(default_voice)
             self.settings_manager.save(self.settings)
             self.tts.update_voice(self.settings.tts_voice, self.settings.tts_speaker, self.settings.piper_path)
+        elif not default_voice.exists():
+            self._download_default_voice_async()
 
         if not self.ollama.health():
             self.ui.set_warning("Ollama is not reachable. Start 'ollama serve'.")
@@ -329,6 +331,38 @@ class AssistantController(QObject):
                 import openwakeword  # noqa: F401
             except Exception:
                 self.ui.set_warning("openWakeWord not installed. Run: pip install openwakeword")
+
+    def _download_default_voice_async(self):
+        # Download Piper voice in background if missing (Windows convenience)
+        def worker():
+            try:
+                import requests
+                base = "https://github.com/rhasspy/piper/releases/download/v1.2.0"
+                voice_dir = Path("models/piper")
+                voice_dir.mkdir(parents=True, exist_ok=True)
+                voice_path = voice_dir / "en_US-lessac-medium.onnx"
+                json_path = voice_dir / "en_US-lessac-medium.onnx.json"
+                if not voice_path.exists():
+                    self.ui.set_warning("Downloading Piper voice...")
+                    with requests.get(f"{base}/en_US-lessac-medium.onnx", stream=True, timeout=60) as r:
+                        r.raise_for_status()
+                        with open(voice_path, "wb") as f:
+                            for chunk in r.iter_content(chunk_size=1024 * 1024):
+                                if chunk:
+                                    f.write(chunk)
+                if not json_path.exists():
+                    with requests.get(f"{base}/en_US-lessac-medium.onnx.json", stream=True, timeout=60) as r:
+                        r.raise_for_status()
+                        with open(json_path, "wb") as f:
+                            f.write(r.content)
+                self.settings.tts_voice = str(voice_path)
+                self.settings_manager.save(self.settings)
+                self.tts.update_voice(self.settings.tts_voice, self.settings.tts_speaker, self.settings.piper_path)
+                self.ui.set_warning("")
+            except Exception as exc:
+                self.ui.set_warning(f"Piper voice download failed: {exc}")
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def start(self):
         self.ui.set_kiosk_mode(self.settings.kiosk_mode)
