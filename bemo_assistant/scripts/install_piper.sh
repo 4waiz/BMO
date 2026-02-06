@@ -19,8 +19,8 @@ else
 fi
 
 URL="https://github.com/rhasspy/piper/releases/download/v${PIPER_VERSION}/${FILE}"
-VOICE_URL="https://github.com/rhasspy/piper/releases/download/v${PIPER_VERSION}/en_US-lessac-medium.onnx"
-VOICE_JSON_URL="https://github.com/rhasspy/piper/releases/download/v${PIPER_VERSION}/en_US-lessac-medium.onnx.json"
+VOICE_URL="https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx?download=true"
+VOICE_JSON_URL="https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json?download=true"
 
 cd "$TOOLS_DIR"
 if [ ! -f "piper" ]; then

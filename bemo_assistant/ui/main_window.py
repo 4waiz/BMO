@@ -250,16 +250,16 @@ class SettingsDialog(QDialog):
                     msg = "Voice already downloaded."
                 else:
                     import requests
-                    base = "https://github.com/rhasspy/piper/releases/download/v1.2.0"
+                    base = "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium"
                     if not voice_path.exists():
-                        with requests.get(f"{base}/en_US-lessac-medium.onnx", stream=True, timeout=60) as r:
+                        with requests.get(f"{base}/en_US-lessac-medium.onnx?download=true", stream=True, timeout=60) as r:
                             r.raise_for_status()
                             with open(voice_path, "wb") as f:
                                 for chunk in r.iter_content(chunk_size=1024 * 1024):
                                     if chunk:
                                         f.write(chunk)
                     if not json_path.exists():
-                        with requests.get(f"{base}/en_US-lessac-medium.onnx.json", stream=True, timeout=60) as r:
+                        with requests.get(f"{base}/en_US-lessac-medium.onnx.json?download=true", stream=True, timeout=60) as r:
                             r.raise_for_status()
                             with open(json_path, "wb") as f:
                                 f.write(r.content)
