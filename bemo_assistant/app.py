@@ -516,15 +516,38 @@ class AssistantController(QObject):
         # Strip role labels and fabricated transcripts
         cleaned = re.sub(r"^(bemo|assistant|user|system|bemo chatbot)\s*:\s*", "", text, flags=re.I | re.M)
         cleaned = re.sub(r"\n{2,}", "\n", cleaned).strip()
-        # Drop list-like lines unless explicitly asked
+        # Handle list-like lines: keep if asked, otherwise collapse into a sentence
         user_lower = (user_text or "").lower()
-        asked_for_list = any(k in user_lower for k in ["list", "recommend", "suggest", "options"])
-        lines = []
+        asked_for_list = any(k in user_lower for k in ["list", "recommend", "suggest", "options", "examples"])
+        list_items = []
+        kept_lines = []
         for line in cleaned.splitlines():
-            if re.match(r"^\s*([-*•]|\d+\.)\s*", line) and not asked_for_list:
+            m = re.match(r"^\s*([-*•]|\d+\.)\s*(.*)$", line)
+            if m:
+                item = m.group(2).strip()
+                if item:
+                    list_items.append(item)
+                if asked_for_list:
+                    kept_lines.append(line)
                 continue
-            lines.append(line)
-        cleaned = " ".join(lines).strip()
+            kept_lines.append(line)
+        if asked_for_list:
+            # Trim long lists to 3 items
+            trimmed = []
+            count = 0
+            for line in kept_lines:
+                if re.match(r"^\s*([-*•]|\d+\.)\s*", line):
+                    count += 1
+                    if count > 3:
+                        continue
+                trimmed.append(line)
+            cleaned = " ".join(trimmed).strip()
+        else:
+            cleaned = " ".join(kept_lines).strip()
+            if list_items:
+                list_items = list_items[:3]
+                cleaned = cleaned.rstrip(":")
+                cleaned = f"{cleaned} For example: " + "; ".join(list_items) + "."
         cleaned = re.sub(r"\s{2,}", " ", cleaned).strip()
 
         # Prefer 1-2 sentences max (1 sentence for greetings/short inputs)
@@ -532,14 +555,16 @@ class AssistantController(QObject):
         user_words = len(re.findall(r"\w+", user_text or ""))
         greeting_like = any(k in user_lower for k in ["hi", "hello", "hey", "how are you", "what's up"])
         question_like = ("?" in user_text) or any(k in user_lower for k in ["who", "what", "why", "how", "tell me", "about", "explain"])
-        max_sentences = 1 if greeting_like and not question_like else 2
+        if greeting_like and not question_like:
+            max_sentences = 1
+        elif question_like:
+            max_sentences = 4
+        else:
+            max_sentences = 2
         short = " ".join(sentences[:max_sentences]).strip()
-        max_chars = 360 if question_like else 240
+        max_chars = 520 if question_like else 240
         if len(short) > max_chars:
             short = short[:max_chars].rsplit(" ", 1)[0] + "..."
-        # If the response is too short for a question, provide a minimal helpful fallback.
-        if question_like and len(re.findall(r"\w+", short)) < 3:
-            return "Robots are machines that sense, compute, and act on the world. Want a quick example?"
         return short if short else cleaned
 
     def ask_llm(self, text: str):
