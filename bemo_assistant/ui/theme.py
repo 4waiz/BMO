@@ -30,6 +30,13 @@ QLabel#statusLabel {{
     font-size: 16px;
     font-weight: 600;
 }}
+QLabel#warningLabel {{
+    background: {PALETTE['accent_yellow']};
+    color: #2C2C2C;
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-weight: 600;
+}}
 QTextEdit#transcript {{
     background: #F8FFFD;
     border: 2px solid {PALETTE['dark']};

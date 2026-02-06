@@ -319,7 +319,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(face_frame)
 
         self.warning_label = QLabel("")
-        self.warning_label.setStyleSheet("color: #8A2E2E; font-weight: 600;")
+        self.warning_label.setObjectName("warningLabel")
+        self.warning_label.setWordWrap(True)
+        self.warning_label.setVisible(False)
         layout.addWidget(self.warning_label)
 
         self.transcript_toggle = QToolButton()
@@ -384,6 +386,7 @@ class MainWindow(QMainWindow):
 
     def set_warning(self, text: str):
         self.warning_label.setText(text)
+        self.warning_label.setVisible(bool(text.strip()))
 
     def set_game_active(self, name: str):
         self.game_panel.setVisible(True)
