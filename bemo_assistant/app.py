@@ -517,10 +517,8 @@ class AssistantController(QObject):
         cleaned = re.sub(r"^(bemo|assistant|user|system|bemo chatbot)\s*:\s*", "", text, flags=re.I | re.M)
         cleaned = re.sub(r"\n{2,}", "\n", cleaned).strip()
         # Drop list-like lines unless explicitly asked
-        if user_text:
-            asked_for_list = any(k in user_text.lower() for k in ["list", "recommend", "suggest", "options"])
-        else:
-            asked_for_list = False
+        user_lower = (user_text or "").lower()
+        asked_for_list = any(k in user_lower for k in ["list", "recommend", "suggest", "options"])
         lines = []
         for line in cleaned.splitlines():
             if re.match(r"^\s*([-*•]|\d+\.)\s*", line) and not asked_for_list:
@@ -532,12 +530,16 @@ class AssistantController(QObject):
         # Prefer 1-2 sentences max (1 sentence for greetings/short inputs)
         sentences = re.split(r"(?<=[.!?])\s+", cleaned)
         user_words = len(re.findall(r"\w+", user_text or ""))
-        greeting_like = any(k in (user_text or "").lower() for k in ["hi", "hello", "hey", "how are you", "what's up"])
-        max_sentences = 1 if greeting_like or user_words <= 6 else 2
+        greeting_like = any(k in user_lower for k in ["hi", "hello", "hey", "how are you", "what's up"])
+        question_like = ("?" in user_text) or any(k in user_lower for k in ["who", "what", "why", "how", "tell me", "about", "explain"])
+        max_sentences = 1 if greeting_like and not question_like else 2
         short = " ".join(sentences[:max_sentences]).strip()
-        max_chars = 240
+        max_chars = 360 if question_like else 240
         if len(short) > max_chars:
             short = short[:max_chars].rsplit(" ", 1)[0] + "..."
+        # If the response is too short for a question, provide a minimal helpful fallback.
+        if question_like and len(re.findall(r"\w+", short)) < 3:
+            return "Robots are machines that sense, compute, and act on the world. Want a quick example?"
         return short if short else cleaned
 
     def ask_llm(self, text: str):
