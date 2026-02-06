@@ -26,6 +26,12 @@ class AudioPlayer:
             data = data.reshape(-1, channels)
         else:
             data = data.reshape(-1, 1)
+        # Convert to float32 for smoother playback and better device compatibility
+        data = data.astype(np.float32) / 32768.0
+
+        # Use a slightly larger blocksize and higher latency to reduce glitches
+        blocksize = int(samplerate * 0.02)
+        blocksize = max(256, min(4096, blocksize))
 
         idx = 0
 
@@ -41,13 +47,15 @@ class AudioPlayer:
             outdata[:] = chunk
             idx += frame_count
             if on_amplitude:
-                rms = np.sqrt(np.mean(chunk.astype(np.float32) ** 2)) / 32768.0
+                rms = float(np.sqrt(np.mean(chunk * chunk)))
                 on_amplitude(float(rms))
 
         self._stream = sd.OutputStream(
             samplerate=samplerate,
             channels=channels,
-            dtype="int16",
+            dtype="float32",
+            blocksize=blocksize,
+            latency="high",
             callback=callback,
             device=device if device else None,
         )
