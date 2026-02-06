@@ -47,6 +47,9 @@ QTextEdit#transcript {{
     border-radius: 12px;
     padding: 8px;
 }}
+QTextEdit#transcript {{
+    min-height: 140px;
+}}
 QPushButton {{
     background: {PALETTE['dark']};
     color: white;

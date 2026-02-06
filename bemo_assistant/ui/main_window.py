@@ -314,6 +314,7 @@ class MainWindow(QMainWindow):
         face_frame = QFrame()
         face_frame.setObjectName("faceFrame")
         face_layout = QVBoxLayout(face_frame)
+        face_layout.setContentsMargins(6, 6, 6, 6)
         self.face = FaceWidget()
         face_layout.addWidget(self.face)
         layout.addWidget(face_frame)
@@ -326,12 +327,16 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.transcript_toggle)
 
         self.transcript = TranscriptPanel()
+        self.transcript.setMinimumHeight(140)
         layout.addWidget(self.transcript)
 
         self.game_panel = GamePanel()
         self.game_panel.inputSubmitted.connect(self.gameInputSubmitted.emit)
         self.game_panel.setVisible(False)
         layout.addWidget(self.game_panel)
+
+        layout.setStretchFactor(face_frame, 5)
+        layout.setStretchFactor(self.transcript, 2)
 
         controls = QHBoxLayout()
         self.talk_btn = QPushButton("Talk")
