@@ -510,6 +510,21 @@ class AssistantController(QObject):
         lines = "\n".join(f"- {m}" for m in self.memory[-5:])
         return f"\nMemory:\n{lines}\n"
 
+    def _normalize_response(self, text: str) -> str:
+        if not text:
+            return ""
+        # Strip role labels and fabricated transcripts
+        cleaned = re.sub(r"^(bemo|assistant|user|system|bemo chatbot)\s*:\s*", "", text, flags=re.I | re.M)
+        cleaned = re.sub(r"\n{2,}", "\n", cleaned).strip()
+        # Prefer 1-2 sentences max
+        sentences = re.split(r"(?<=[.!?])\s+", cleaned)
+        max_sentences = 2
+        short = " ".join(sentences[:max_sentences]).strip()
+        max_chars = 240
+        if len(short) > max_chars:
+            short = short[:max_chars].rsplit(" ", 1)[0] + "..."
+        return short if short else cleaned
+
     def ask_llm(self, text: str):
         self.update_ui_state(STATE_THINKING)
         self.ui.update_streaming_assistant("")
@@ -534,6 +549,7 @@ class AssistantController(QObject):
         self.update_ui_state(STATE_IDLE)
 
     def on_llm_done(self, response: str):
+        response = self._normalize_response(response)
         self.history.append({"role": "user", "content": self.ui.last_user_text()})
         self.history.append({"role": "assistant", "content": response})
         self.ui.update_streaming_assistant(response)
