@@ -318,12 +318,6 @@ class MainWindow(QMainWindow):
         face_layout.addWidget(self.face)
         layout.addWidget(face_frame)
 
-        self.warning_label = QLabel("")
-        self.warning_label.setObjectName("warningLabel")
-        self.warning_label.setWordWrap(True)
-        self.warning_label.setVisible(False)
-        layout.addWidget(self.warning_label)
-
         self.transcript_toggle = QToolButton()
         self.transcript_toggle.setText("Transcript")
         self.transcript_toggle.setCheckable(True)
@@ -360,6 +354,18 @@ class MainWindow(QMainWindow):
         controls.addWidget(self.games_btn)
         controls.addWidget(self.camera_btn)
         layout.addLayout(controls)
+
+        self.status_bar = QFrame()
+        self.status_bar.setObjectName("statusBar")
+        status_layout = QHBoxLayout(self.status_bar)
+        status_layout.setContentsMargins(10, 6, 10, 6)
+        self.warning_label = QLabel("")
+        self.warning_label.setObjectName("warningLabel")
+        self.warning_label.setWordWrap(True)
+        self.warning_label.setVisible(False)
+        status_layout.addWidget(self.warning_label)
+        status_layout.addStretch()
+        layout.addWidget(self.status_bar)
 
     def _toggle_transcript(self, checked):
         self.transcript.setVisible(checked)

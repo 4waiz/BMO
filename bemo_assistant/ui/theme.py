@@ -26,6 +26,10 @@ QFrame#faceFrame {{
     background: transparent;
     border: none;
 }}
+QFrame#statusBar {{
+    background: {PALETTE['panel']};
+    border-radius: 12px;
+}}
 QLabel#statusLabel {{
     font-size: 16px;
     font-weight: 600;
