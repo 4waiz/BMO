@@ -1,7 +1,7 @@
 ﻿import random
 import time
 import math
-from PySide6.QtCore import QTimer, Signal
+from PySide6.QtCore import QTimer, Signal, Qt
 from PySide6.QtGui import QColor, QPainter, QPen, QBrush
 from PySide6.QtWidgets import QWidget, QTextEdit, QFrame, QLabel, QLineEdit, QPushButton, QGridLayout, QHBoxLayout, QVBoxLayout
 
@@ -90,14 +90,26 @@ class FaceWidget(QWidget):
             painter.drawEllipse(int(left_eye[0]) - eye_radius, int(left_eye[1]) - eye_radius, eye_radius * 2, eye_radius * 2)
             painter.drawEllipse(int(right_eye[0]) - eye_radius, int(right_eye[1]) - eye_radius, eye_radius * 2, eye_radius * 2)
 
-        mouth_width = rect.width() * 0.4
+        mouth_width = rect.width() * 0.38
         mouth_height = 8 + (self.mouth_level * 24)
         mouth_x = rect.center().x() - mouth_width / 2
         mouth_y = rect.center().y() + rect.height() * 0.18
 
         painter.setPen(QPen(QColor("#1E4D4A"), 3))
         painter.setBrush(QBrush(QColor("#1E4D4A")))
-        painter.drawRoundedRect(int(mouth_x), int(mouth_y), int(mouth_width), int(mouth_height), 8, 8)
+
+        if self.state == "idle":
+            # Smile arc for idle
+            arc_rect = rect.adjusted(
+                int(rect.width() * 0.25),
+                int(rect.height() * 0.45),
+                -int(rect.width() * 0.25),
+                -int(rect.height() * 0.20),
+            )
+            painter.setBrush(Qt.NoBrush)
+            painter.drawArc(arc_rect, 200 * 16, 140 * 16)
+        else:
+            painter.drawRoundedRect(int(mouth_x), int(mouth_y), int(mouth_width), int(mouth_height), 8, 8)
 
 
 class TranscriptPanel(QTextEdit):
@@ -180,3 +192,4 @@ class GamePanel(QFrame):
             col = idx % cols
             self.quick_layout.addWidget(btn, row, col)
             self._buttons.append(btn)
+
