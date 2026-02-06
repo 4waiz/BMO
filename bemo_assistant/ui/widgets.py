@@ -1,8 +1,8 @@
 ﻿import random
 import time
 import math
-from PySide6.QtCore import QTimer, Signal, Qt
-from PySide6.QtGui import QColor, QPainter, QPen, QBrush
+from PySide6.QtCore import QTimer, Signal, Qt, QPointF
+from PySide6.QtGui import QColor, QPainter, QPen, QBrush, QPainterPath
 from PySide6.QtWidgets import QWidget, QTextEdit, QFrame, QLabel, QLineEdit, QPushButton, QGridLayout, QHBoxLayout, QVBoxLayout
 
 
@@ -115,6 +115,19 @@ class FaceWidget(QWidget):
             )
             painter.setBrush(Qt.NoBrush)
             painter.drawArc(arc_rect, 200 * 16, 140 * 16)
+        elif self.state == "speaking":
+            # Curved talking mouth that follows amplitude
+            curve = 6 + (self.mouth_level * 36)
+            path = QPainterPath()
+            start = QPointF(mouth_x, mouth_y)
+            end = QPointF(mouth_x + mouth_width, mouth_y)
+            ctrl = QPointF(rect.center().x(), mouth_y + curve)
+            path.moveTo(start)
+            path.quadTo(ctrl, end)
+            pen = QPen(QColor("#1E4D4A"), 6 + self.mouth_level * 10, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+            painter.setPen(pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(path)
         else:
             painter.drawRoundedRect(int(mouth_x), int(mouth_y), int(mouth_width), int(mouth_height), 8, 8)
 

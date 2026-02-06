@@ -444,8 +444,19 @@ class AssistantController(QObject):
         self.update_ui_state(STATE_IDLE)
         self.wakeword.resume()
 
+    def _is_wake_only(self, text: str) -> bool:
+        t = re.sub(r"[^a-z ]", " ", text.lower())
+        t = re.sub(r"\s+", " ", t).strip()
+        if not t:
+            return True
+        wake_variants = {"hey bemo", "hey bmo", "hey be mo", "hey beemo"}
+        return t in wake_variants
+
     def on_transcript(self, text: str):
         self.wakeword.resume()
+        if self._is_wake_only(text):
+            self.update_ui_state(STATE_IDLE)
+            return
         if not text:
             self.update_ui_state(STATE_IDLE)
             return
