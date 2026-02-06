@@ -516,6 +516,12 @@ class AssistantController(QObject):
         # Strip role labels and fabricated transcripts
         cleaned = re.sub(r"^(bemo|assistant|user|system|bemo chatbot)\s*:\s*", "", text, flags=re.I | re.M)
         cleaned = re.sub(r"\n{2,}", "\n", cleaned).strip()
+        # Strip emojis / non-BMP symbols
+        try:
+            cleaned = re.sub(r"[\U00010000-\U0010ffff]", "", cleaned)
+        except re.error:
+            pass
+        cleaned = cleaned.replace("Beemo", "Bemo")
         # Handle list-like lines: keep if asked, otherwise collapse into a sentence
         user_lower = (user_text or "").lower()
         asked_for_list = any(k in user_lower for k in ["list", "recommend", "suggest", "options", "examples"])
@@ -550,11 +556,24 @@ class AssistantController(QObject):
                 cleaned = f"{cleaned} For example: " + "; ".join(list_items) + "."
         cleaned = re.sub(r"\s{2,}", " ", cleaned).strip()
 
+        # Remove meta/conversation examples
+        meta_phrases = [
+            "here's an example",
+            "example of a conversation",
+            "conversation between",
+            "example conversation",
+        ]
+        if any(p in cleaned.lower() for p in meta_phrases):
+            cleaned = re.split(r"(here's an example|example of a conversation|conversation between|example conversation)", cleaned, flags=re.I)[0].strip()
+
         # Prefer 1-2 sentences max (1 sentence for greetings/short inputs)
         sentences = re.split(r"(?<=[.!?])\s+", cleaned)
         user_words = len(re.findall(r"\w+", user_text or ""))
         greeting_like = any(k in user_lower for k in ["hi", "hello", "hey", "how are you", "what's up"])
         question_like = ("?" in user_text) or any(k in user_lower for k in ["who", "what", "why", "how", "tell me", "about", "explain"])
+        # Short canned response for simple greetings
+        if greeting_like and not question_like and user_words <= 8:
+            return "I'm doing good—thanks for asking."
         if greeting_like and not question_like:
             max_sentences = 1
         elif question_like:
@@ -565,6 +584,13 @@ class AssistantController(QObject):
         max_chars = 520 if question_like else 240
         if len(short) > max_chars:
             short = short[:max_chars].rsplit(" ", 1)[0] + "..."
+        # If too short for a question, provide a direct minimal answer
+        if question_like and len(re.findall(r"\w+", short)) < 4:
+            if "robot" in user_lower:
+                return "Robots are machines that sense, compute, and act on the world, often used in factories, homes, and research."
+            if "game" in user_lower or "retro" in user_lower:
+                return "Retro consoles like the NES, SNES, Genesis, and PS1 defined classic gaming, and many of their best titles still hold up today."
+            return "Got it. Give me one specific thing you want to know, and I'll answer it directly."
         return short if short else cleaned
 
     def ask_llm(self, text: str):
