@@ -18,6 +18,22 @@ QWidget {{
 QMainWindow {{
     background: {PALETTE['primary']};
 }}
+QDialog#settingsDialog {{
+    background: #1E1F21;
+}}
+QFrame#settingsPanel {{
+    background: #1E1F21;
+    border-radius: 12px;
+}}
+QDialog#settingsDialog QLabel {{
+    color: #F2FFFA;
+}}
+QDialog#settingsDialog QCheckBox {{
+    color: #F2FFFA;
+}}
+QDialog#settingsDialog QToolButton {{
+    color: #F2FFFA;
+}}
 QFrame#card {{
     background: {PALETTE['panel']};
     border-radius: 18px;
@@ -105,6 +121,19 @@ QComboBox {{
     border: 2px solid {PALETTE['dark']};
     border-radius: 10px;
     padding: 6px 10px;
+}}
+QDialog#settingsDialog QTextEdit {{
+    background: #F7FFFC;
+    color: #123E3A;
+    border: 2px solid {PALETTE['dark']};
+    border-radius: 10px;
+    padding: 6px 10px;
+}}
+QDialog#settingsDialog QLineEdit {{
+    background: #F7FFFC;
+}}
+QDialog#settingsDialog QComboBox {{
+    background: #F7FFFC;
 }}
 QCheckBox::indicator {{
     width: 18px;

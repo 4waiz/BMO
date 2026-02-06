@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QTextEdit,
     QCheckBox,
+    QScrollArea,
 )
 
 from ui.widgets import FaceWidget, TranscriptPanel, GamePanel
@@ -30,6 +31,8 @@ class SettingsDialog(QDialog):
     def __init__(self, settings: AppSettings, models, verify_fn=None, stt_test_fn=None, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Bemo Settings")
+        self.setObjectName("settingsDialog")
+        self.resize(720, 760)
         self._settings = replace(settings)
         self._models = models or []
         self._verify_fn = verify_fn
@@ -110,7 +113,15 @@ class SettingsDialog(QDialog):
         form.addRow("", self.camera_check)
         form.addRow("", self.kiosk_check)
 
-        layout.addLayout(form)
+        panel = QFrame()
+        panel.setObjectName("settingsPanel")
+        panel_layout = QVBoxLayout(panel)
+        panel_layout.addLayout(form)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(panel)
+        layout.addWidget(scroll)
 
         btn_row = QHBoxLayout()
         self.save_btn = QPushButton("Save")
