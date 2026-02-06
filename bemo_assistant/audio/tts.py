@@ -31,8 +31,13 @@ class PiperTTS:
         self.piper_path = piper_path
 
     def _resolve_piper(self):
-        if self.piper_path and Path(self.piper_path).exists():
-            return self.piper_path
+        base_dir = Path(__file__).resolve().parents[1]
+        if self.piper_path:
+            p = Path(self.piper_path)
+            if not p.is_absolute():
+                p = base_dir / p
+            if p.exists():
+                return str(p)
 
         # Look for piper.exe next to the current Python executable (venv Scripts)
         try:
@@ -46,9 +51,12 @@ class PiperTTS:
         return shutil.which("piper")
 
     def _resolve_voice_path(self):
+        base_dir = Path(__file__).resolve().parents[1]
         if not self.voice:
             return ""
         voice_path = Path(self.voice)
+        if not voice_path.is_absolute():
+            voice_path = base_dir / voice_path
         if voice_path.exists():
             return str(voice_path)
         return ""
