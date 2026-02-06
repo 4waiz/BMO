@@ -23,9 +23,8 @@ QFrame#card {{
     border-radius: 18px;
 }}
 QFrame#faceFrame {{
-    background: {PALETTE['screen']};
-    border: 3px solid {PALETTE['dark']};
-    border-radius: 24px;
+    background: transparent;
+    border: none;
 }}
 QLabel#statusLabel {{
     font-size: 16px;
