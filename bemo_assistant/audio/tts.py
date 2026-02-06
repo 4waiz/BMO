@@ -61,13 +61,16 @@ class PiperTTS:
 
     def _resolve_voice_path(self):
         base_dir = Path(__file__).resolve().parents[1]
-        if not self.voice:
-            return ""
-        voice_path = Path(self.voice)
-        if not voice_path.is_absolute():
-            voice_path = base_dir / voice_path
-        if voice_path.exists():
-            return str(voice_path)
+        candidates = []
+        if self.voice:
+            voice_path = Path(self.voice)
+            if not voice_path.is_absolute():
+                voice_path = base_dir / voice_path
+            candidates.append(voice_path)
+        candidates.append(base_dir / "models" / "piper" / "en_US-lessac-medium.onnx")
+        for cand in candidates:
+            if cand.exists():
+                return str(cand)
         return ""
 
     def synthesize(self, text: str) -> str:
@@ -76,7 +79,7 @@ class PiperTTS:
             raise RuntimeError("Piper not found in PATH or configured path")
         voice_path = self._resolve_voice_path()
         if not voice_path:
-            raise RuntimeError("Piper voice model not found. Set a valid .onnx path in Settings.")
+            raise RuntimeError(f"Piper voice model not found. Expected {self._expected_voice_path()} or download a voice.")
 
         out_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
         out_path = out_file.name
