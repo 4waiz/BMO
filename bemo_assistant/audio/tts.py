@@ -13,7 +13,7 @@ class PiperTTS:
 
     @property
     def is_available(self) -> bool:
-        return bool(self._resolve_piper()) and bool(self.voice)
+        return bool(self._resolve_piper()) and bool(self._resolve_voice_path())
 
     def update_voice(self, voice: str, speaker_id: str = "", piper_path: str = ""):
         self.voice = voice
@@ -25,18 +25,27 @@ class PiperTTS:
             return self.piper_path
         return shutil.which("piper")
 
+    def _resolve_voice_path(self):
+        if not self.voice:
+            return ""
+        voice_path = Path(self.voice)
+        if voice_path.exists():
+            return str(voice_path)
+        return ""
+
     def synthesize(self, text: str) -> str:
         exe = self._resolve_piper()
         if not exe:
             raise RuntimeError("Piper not found in PATH or configured path")
-        if not self.voice:
-            raise RuntimeError("Piper voice model is not configured")
+        voice_path = self._resolve_voice_path()
+        if not voice_path:
+            raise RuntimeError("Piper voice model not found. Set a valid .onnx path in Settings.")
 
         out_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
         out_path = out_file.name
         out_file.close()
 
-        cmd = [exe, "--model", self.voice, "--output_file", out_path]
+        cmd = [exe, "--model", voice_path, "--output_file", out_path]
         if self.speaker_id:
             cmd += ["--speaker", str(self.speaker_id)]
 

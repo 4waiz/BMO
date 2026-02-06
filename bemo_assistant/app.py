@@ -448,6 +448,10 @@ class AssistantController(QObject):
         if not response:
             self.update_ui_state(STATE_IDLE)
             return
+        if not self.tts.is_available:
+            self.ui.set_warning("TTS unavailable. Set a valid Piper executable and voice in Settings.")
+            self.update_ui_state(STATE_IDLE)
+            return
         self.update_ui_state(STATE_SPEAKING)
         self.speech_worker = SpeechWorker(response, self.settings, self.tts, self.player)
         self.speech_worker.amplitude.connect(self.ui.set_mouth_level)
@@ -612,12 +616,16 @@ class AssistantController(QObject):
         self.wakeword.stop()
         if self.listen_worker:
             self.listen_worker.stop()
+            self.listen_worker.wait(2000)
         if self.llm_worker:
             self.llm_worker.stop()
+            self.llm_worker.wait(2000)
         if self.speech_worker:
             self.speech_worker.stop()
+            self.speech_worker.wait(2000)
         if self.stop_listener:
             self.stop_listener.stop()
+            self.stop_listener.join(timeout=2)
 
 
 def setup_logging(data_dir: Path):

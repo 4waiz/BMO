@@ -71,4 +71,15 @@ if (-not $hasWhisper) {
   & $python scripts\download_whisper_model.py --model small.en --output models\whisper
 }
 
+$voiceDir = Join-Path $root "models\\piper"
+$voicePath = Join-Path $voiceDir "en_US-lessac-medium.onnx"
+$voiceJson = Join-Path $voiceDir "en_US-lessac-medium.onnx.json"
+if (!(Test-Path $voicePath)) {
+  Write-Host "Downloading Piper voice (en_US-lessac-medium)..."
+  New-Item -ItemType Directory -Force -Path $voiceDir | Out-Null
+  $base = "https://github.com/rhasspy/piper/releases/download/v1.2.0"
+  Invoke-WebRequest -Uri "$base/en_US-lessac-medium.onnx" -OutFile $voicePath
+  Invoke-WebRequest -Uri "$base/en_US-lessac-medium.onnx.json" -OutFile $voiceJson
+}
+
 & $python app.py
