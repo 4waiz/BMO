@@ -52,7 +52,14 @@ class FaceWidget(QWidget):
         self.update()
 
     def set_mouth_level(self, level: float):
-        self.mouth_level = max(0.0, min(1.0, level))
+        # Boost and smooth amplitude for visible lip sync
+        scaled = max(0.0, min(1.0, level * 6.5))
+        if scaled < 0.05:
+            scaled = 0.0
+        if scaled > self.mouth_level:
+            self.mouth_level += (scaled - self.mouth_level) * 0.6
+        else:
+            self.mouth_level += (scaled - self.mouth_level) * 0.35
         self._last_amp_time = time.time()
         self.update()
 
@@ -63,7 +70,7 @@ class FaceWidget(QWidget):
         if time.time() - self._last_amp_time < 0.25:
             return
         self._talk_phase += 0.4
-        self.mouth_level = 0.15 + 0.2 * (1 + math.sin(self._talk_phase)) / 2
+        self.mouth_level = 0.12 + 0.35 * (1 + math.sin(self._talk_phase)) / 2
         self.update()
 
     def paintEvent(self, event):
@@ -91,7 +98,7 @@ class FaceWidget(QWidget):
             painter.drawEllipse(int(right_eye[0]) - eye_radius, int(right_eye[1]) - eye_radius, eye_radius * 2, eye_radius * 2)
 
         mouth_width = rect.width() * 0.38
-        mouth_height = 8 + (self.mouth_level * 24)
+        mouth_height = 6 + (self.mouth_level * 28)
         mouth_x = rect.center().x() - mouth_width / 2
         mouth_y = rect.center().y() + rect.height() * 0.18
 
