@@ -510,15 +510,30 @@ class AssistantController(QObject):
         lines = "\n".join(f"- {m}" for m in self.memory[-5:])
         return f"\nMemory:\n{lines}\n"
 
-    def _normalize_response(self, text: str) -> str:
+    def _normalize_response(self, text: str, user_text: str = "") -> str:
         if not text:
             return ""
         # Strip role labels and fabricated transcripts
         cleaned = re.sub(r"^(bemo|assistant|user|system|bemo chatbot)\s*:\s*", "", text, flags=re.I | re.M)
         cleaned = re.sub(r"\n{2,}", "\n", cleaned).strip()
-        # Prefer 1-2 sentences max
+        # Drop list-like lines unless explicitly asked
+        if user_text:
+            asked_for_list = any(k in user_text.lower() for k in ["list", "recommend", "suggest", "options"])
+        else:
+            asked_for_list = False
+        lines = []
+        for line in cleaned.splitlines():
+            if re.match(r"^\s*([-*•]|\d+\.)\s*", line) and not asked_for_list:
+                continue
+            lines.append(line)
+        cleaned = " ".join(lines).strip()
+        cleaned = re.sub(r"\s{2,}", " ", cleaned).strip()
+
+        # Prefer 1-2 sentences max (1 sentence for greetings/short inputs)
         sentences = re.split(r"(?<=[.!?])\s+", cleaned)
-        max_sentences = 2
+        user_words = len(re.findall(r"\w+", user_text or ""))
+        greeting_like = any(k in (user_text or "").lower() for k in ["hi", "hello", "hey", "how are you", "what's up"])
+        max_sentences = 1 if greeting_like or user_words <= 6 else 2
         short = " ".join(sentences[:max_sentences]).strip()
         max_chars = 240
         if len(short) > max_chars:
@@ -549,7 +564,7 @@ class AssistantController(QObject):
         self.update_ui_state(STATE_IDLE)
 
     def on_llm_done(self, response: str):
-        response = self._normalize_response(response)
+        response = self._normalize_response(response, self.ui.last_user_text())
         self.history.append({"role": "user", "content": self.ui.last_user_text()})
         self.history.append({"role": "assistant", "content": response})
         self.ui.update_streaming_assistant(response)
