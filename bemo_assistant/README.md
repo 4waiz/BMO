@@ -75,6 +75,7 @@ The scripts will:
 - **Ollama not reachable**: run `ollama serve`
 - **No audio I/O**: check PortAudio and device selection in Settings
 - **TTS missing**: install Piper and set path/voice in Settings
+- **Piper error: ModuleNotFoundError: pathvalidate**: run `pip install pathvalidate` (or `pip install -r requirements.txt`)
 - **Windows webrtcvad build error**: install Microsoft C++ Build Tools or rerun the bootstrap script (it will continue without webrtcvad and use an energy-based VAD fallback)
 - **Windows Piper voice missing**: run `scripts\bootstrap_and_run.ps1` again or download `en_US-lessac-medium.onnx` into `models\piper` (use the Hugging Face URL in scripts) and set the path in Settings
 
