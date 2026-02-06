@@ -8,7 +8,7 @@ from pathlib import Path
 
 import sounddevice as sd
 
-from PySide6.QtCore import QObject, Signal, QThread
+from PySide6.QtCore import QObject, Signal, QThread, QTimer
 from PySide6.QtWidgets import QApplication
 
 from ui.main_window import MainWindow
@@ -302,10 +302,17 @@ class AssistantController(QObject):
         self.apply_startup_checks()
 
     def apply_startup_checks(self):
+        # Auto-detect default Piper voice if it exists locally
+        default_voice = Path("models/piper/en_US-lessac-medium.onnx")
+        if default_voice.exists() and (not self.settings.tts_voice or not Path(self.settings.tts_voice).exists()):
+            self.settings.tts_voice = str(default_voice)
+            self.settings_manager.save(self.settings)
+            self.tts.update_voice(self.settings.tts_voice, self.settings.tts_speaker, self.settings.piper_path)
+
         if not self.ollama.health():
             self.ui.set_warning("Ollama is not reachable. Start 'ollama serve'.")
         if not self.tts.is_available:
-            self.ui.set_warning("Piper TTS not found. Install Piper or set TTS voice path in Settings.")
+            self.ui.set_warning("Piper TTS not ready. Set Piper exe + voice in Settings or run bootstrap script.")
         if self.settings.wakeword_mode == "openwakeword":
             try:
                 import openwakeword  # noqa: F401
@@ -316,6 +323,12 @@ class AssistantController(QObject):
         self.ui.set_kiosk_mode(self.settings.kiosk_mode)
         self.ui.show()
         self.wakeword.start()
+        QTimer.singleShot(1200, self.startup_greet)
+
+    def startup_greet(self):
+        greeting = 'Hey, I am Bemo. To talk to me, say the wake word \"Hey, Bemo\".'
+        self.ui.append_transcript("Bemo", greeting)
+        self.reply_with_text(greeting)
 
     def stop_all(self):
         if self.listen_worker:
